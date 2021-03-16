@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dysy.bysj.mapper.MenuMapper">
+
+    <!-- 查询用户拥有的菜单 -->
+    <select id="getMenu4User" resultType="com.dysy.bysj.entity.Menu" parameterType="long">
+        select
+            id,
+            name,
+            icon,
+            parent_id,
+            path,
+            component,
+            sort_no
+        from tb_menu
+        where id in (
+            select menu_id from tb_user_role ur inner join tb_role_menu rm
+            on ur.role_id = rm.role_id
+            where ur.user_id = #{userId}
+        ) and is_deleted = 0
+    </select>
+
+    <!-- 查询角色拥有的菜单 -->
+    <select id="getMenuByRoleId" resultType="com.dysy.bysj.entity.Menu" parameterType="java.lang.Long">
+        select
+            id,
+            name,
+            icon,
+            parent_id,
+            path,
+            component,
+            sort_no
+        from tb_menu where id in (select menu_id from tb_role_menu where role_id = #{id} and is_deleted=0)
+    </select>
+
+    <!-- 递归查询某个特定父节点的子菜单 -->
+    <resultMap type="java.lang.Long" id="menuTree">
+        <id column="id" property="id"/>
+        <collection property="children" ofType="com.dysy.bysj.entity.Menu" column="id" select="getSubMenu"/>
+    </resultMap>
+    <select id="getSubMenuIds" resultMap="menuTree">
+        select id from tb_menu where parent_id = #{id} and is_deleted = 0
+    </select>
+</mapper>
